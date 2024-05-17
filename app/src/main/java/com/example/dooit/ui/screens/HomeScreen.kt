@@ -54,7 +54,7 @@ import com.example.dooit.ui.theme.DooitTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(modifier: Modifier = Modifier, homeViewModel: HomeScreenViewModel= viewModel()) {
+fun HomeScreen(modifier: Modifier = Modifier, homeViewModel: HomeScreenViewModel= viewModel(factory = HomeScreenViewModel.Factory)) {
     val homeUiState = homeViewModel.uiState.collectAsState()
 
     Scaffold(topBar = {
