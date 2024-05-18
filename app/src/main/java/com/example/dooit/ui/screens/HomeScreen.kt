@@ -54,7 +54,11 @@ import com.example.dooit.ui.theme.DooitTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(modifier: Modifier = Modifier, homeViewModel: HomeScreenViewModel= viewModel(factory = HomeScreenViewModel.Factory)) {
+fun HomeScreen(
+    modifier: Modifier = Modifier,
+    homeViewModel: HomeScreenViewModel = viewModel(factory = HomeScreenViewModel.Factory),
+    navigateToList: (id:Int?) -> Unit
+) {
     val homeUiState = homeViewModel.uiState.collectAsState()
 
     Scaffold(topBar = {
@@ -107,7 +111,7 @@ fun HomeScreen(modifier: Modifier = Modifier, homeViewModel: HomeScreenViewModel
                 ) {
                 FilledTonalButton(
                     onClick = {
-                      homeViewModel.toggleShowAll(showAll = true)
+                        homeViewModel.toggleShowAll(showAll = true)
                     },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (homeUiState.value.showAll) Color.Black else Color.Transparent,
@@ -122,9 +126,10 @@ fun HomeScreen(modifier: Modifier = Modifier, homeViewModel: HomeScreenViewModel
                     Text(text = "All List")
                 }
                 Button(
-                    onClick = { homeViewModel.toggleShowAll(false)},
+                    onClick = { homeViewModel.toggleShowAll(false) },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor =if(!homeUiState.value.showAll) Color.Black else Color.Transparent),
+                        containerColor = if (!homeUiState.value.showAll) Color.Black else Color.Transparent
+                    ),
                     shape = RoundedCornerShape(10.dp),
                     modifier = Modifier
                         .fillMaxWidth(1f)
@@ -153,7 +158,7 @@ fun HomeScreen(modifier: Modifier = Modifier, homeViewModel: HomeScreenViewModel
                     style = MaterialTheme.typography.bodyLarge
                 )
                 Button(
-                    onClick = { /*Tools*/ }, colors = ButtonDefaults.buttonColors(
+                    onClick = { navigateToList(null) }, colors = ButtonDefaults.buttonColors(
                         containerColor = Color.Black, contentColor = Color.White
                     ), shape = RoundedCornerShape(10.dp), modifier = Modifier.heightIn(min = 50.dp)
                 ) {
@@ -171,6 +176,6 @@ fun HomeScreen(modifier: Modifier = Modifier, homeViewModel: HomeScreenViewModel
 @Composable
 fun HomeScreenPreview() {
     DooitTheme {
-        HomeScreen()
+        HomeScreen(navigateToList = {})
     }
 }

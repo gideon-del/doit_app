@@ -161,8 +161,8 @@ class NewListViewModel : ViewModel() {
 }
 
 @Composable
-fun NewListScreen(modifier: Modifier = Modifier, screenViewModel: NewListViewModel = viewModel()) {
-    val mainState by screenViewModel.uiState.collectAsState()
+fun NewListScreen(modifier: Modifier = Modifier, screenViewModel: NewListViewModel = viewModel(), id:Int?) {
+
     Scaffold(
         modifier = modifier.fillMaxSize(),
         topBar = { NewListTopBar(modifier = Modifier.padding(horizontal = 10.dp)) }) {
@@ -430,7 +430,7 @@ fun NewListTopBar(modifier: Modifier = Modifier) {
 fun NewListScreenPreview() {
     DooitTheme {
         Surface(modifier = Modifier.fillMaxSize()) {
-            NewListScreen()
+            NewListScreen(id=null)
         }
 
     }

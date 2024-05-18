@@ -11,8 +11,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.example.dooit.ui.screens.HomeScreen
-import com.example.dooit.ui.screens.NewListScreen
+import com.example.dooit.ui.navigation.TodoNav
 import com.example.dooit.ui.theme.DooitTheme
 
 class MainActivity : ComponentActivity() {
@@ -22,7 +21,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             DooitTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                  NewListScreen(modifier = Modifier.padding(innerPadding))
+                 TodoNav(modifier = Modifier.padding(innerPadding))
                 }
             }
         }
