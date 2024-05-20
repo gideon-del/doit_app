@@ -59,6 +59,7 @@ dependencies {
     implementation("androidx.room:room-ktx:$room_version")
     implementation(libs.kotlinx.serialization.json)
     implementation("androidx.navigation:navigation-compose:2.8.0-alpha08")
+    implementation("androidx.datastore:datastore-preferences:1.0.0")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)

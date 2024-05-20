@@ -37,6 +37,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -51,10 +52,13 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.dooit.R
 import com.example.dooit.ui.doitviewmodels.HomeScreenViewModel
 import com.example.dooit.ui.theme.DooitTheme
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,8 +68,12 @@ fun HomeScreen(
     navigateToList: (id: Int) -> Unit,
     navigateToNewList: () -> Unit,
 ) {
-    val homeUiState by homeViewModel.uiState.collectAsState()
-
+    val homeUiState by homeViewModel.uiState.collectAsStateWithLifecycle()
+    LaunchedEffect(key1 = "Main") {
+        withContext(Dispatchers.IO){
+            homeViewModel.getAllList()
+        }
+    }
     Scaffold(topBar = {
         CenterAlignedTopAppBar(
             title = { /*TODO*/ },
@@ -99,7 +107,9 @@ fun HomeScreen(
             if (homeUiState.todoLists.isNotEmpty()) {
                 IconButton(onClick = {
                     navigateToNewList()
-                }, modifier=Modifier.width(65.dp).height(65.dp)) {
+                }, modifier= Modifier
+                    .width(65.dp)
+                    .height(65.dp)) {
                     Icon(imageVector = Icons.Filled.AddCircle, contentDescription = "Add List")
                 }
             }
@@ -200,7 +210,10 @@ fun HomeScreen(
                         Column(
                             horizontalAlignment = Alignment.Start,
                             verticalArrangement = Arrangement.spacedBy(10.dp),
-                            modifier = Modifier.background(color = Color(0xFFFFF6E7)).fillMaxWidth().padding(16.dp)
+                            modifier = Modifier
+                                .background(color = Color(0xFFFFF6E7))
+                                .fillMaxWidth()
+                                .padding(16.dp)
                         ) {
                             Text(
                                 text = it.todoList.title,
@@ -210,9 +223,13 @@ fun HomeScreen(
                                 if (it.todoList.label != null) {
                                     Text(
                                         text = it.todoList.label,
-                                        modifier = Modifier.background(color = Color.Black).width(45.dp).padding(horizontal = 4.dp, vertical = 8.dp).clip(
-                                            RoundedCornerShape(10.dp)
-                                        ),
+                                        modifier = Modifier
+                                            .background(color = Color.Black)
+                                            .width(45.dp)
+                                            .padding(horizontal = 4.dp, vertical = 8.dp)
+                                            .clip(
+                                                RoundedCornerShape(10.dp)
+                                            ),
                                         style = MaterialTheme.typography.bodySmall,
                                         color = Color.White
                                     )

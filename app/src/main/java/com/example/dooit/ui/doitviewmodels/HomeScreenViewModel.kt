@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class HomeScreenViewModel(todoRepo: TodoRepo) : ViewModel() {
+class HomeScreenViewModel(private val todoRepo: TodoRepo) : ViewModel() {
     private val _uiState: MutableStateFlow<HomeUiState> = MutableStateFlow(HomeUiState(
         todoLists = listOf()    ))
     val uiState= _uiState.asStateFlow()
@@ -25,13 +25,13 @@ class HomeScreenViewModel(todoRepo: TodoRepo) : ViewModel() {
             )
         }
     }
-    init {
-        viewModelScope.launch(Dispatchers.IO) {
+     fun getAllList() {
+
             val allItems =todoRepo.getAllListItem()
             _uiState.value = _uiState.value.copy(
                 todoLists = allItems
             )
-        }
+
     }
     companion object  {
        val Factory: ViewModelProvider.Factory = viewModelFactory {

@@ -31,7 +31,7 @@ import com.example.dooit.R
 import com.example.dooit.ui.theme.DooitTheme
 
 @Composable
-fun WelcomeScreen(modifier: Modifier = Modifier) {
+fun WelcomeScreen(modifier: Modifier = Modifier, changeStatus:() -> Unit) {
 
     Column(
         modifier = modifier
@@ -76,7 +76,7 @@ fun WelcomeScreen(modifier: Modifier = Modifier) {
             contentAlignment = Alignment.Center
         ) {
             FilledTonalButton(
-                onClick = { /*TODO*/ },
+                onClick = changeStatus,
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFFFFF)),
                 modifier = Modifier
                     .fillMaxWidth(1 / 2f)
@@ -101,6 +101,6 @@ fun WelcomeScreen(modifier: Modifier = Modifier) {
 @Composable
 fun WelcomeScreenPreview() {
     DooitTheme {
-        WelcomeScreen()
+        WelcomeScreen(changeStatus = {})
     }
 }
