@@ -18,27 +18,39 @@ object HomeScreenRoute
 
 @Serializable
 data class TodoRoute(
- val id: Int
+    val id: Int
 )
+
 @Serializable
 object NewTodoRoute
-@Composable
-fun TodoNav(modifier: Modifier=Modifier) {
- val navController: NavController = rememberNavController()
-  NavHost(navController = navController as NavHostController, startDestination = HomeScreenRoute){
-   composable<HomeScreenRoute> {
-     HomeScreen(navigateToList = {
 
-      navController.navigate(NewTodoRoute)
-     })
-   }
-   composable<NewTodoRoute> {
-  
-    NewListScreen(id = null)
-   }
-   composable<TodoRoute> {
-    val args = it.toRoute<TodoRoute>()
-    NewListScreen(id = args.id)
-   }
-  }
+@Composable
+fun TodoNav(modifier: Modifier = Modifier) {
+    val navController: NavController = rememberNavController()
+    NavHost(
+        navController = navController as NavHostController,
+        startDestination = HomeScreenRoute,
+        modifier = modifier
+    ) {
+        composable<HomeScreenRoute> {
+            HomeScreen(navigateToList = {
+
+                navController.navigate(TodoRoute(it))
+            }, navigateToNewList = {
+                navController.navigate(NewTodoRoute)
+            })
+        }
+        composable<NewTodoRoute> {
+
+            NewListScreen(id = null, navigateToHome = {
+                navController.popBackStack()
+            })
+        }
+        composable<TodoRoute> {
+            val args = it.toRoute<TodoRoute>()
+            NewListScreen(id = args.id,  navigateToHome = {
+                navController.popBackStack()
+            })
+        }
+    }
 }

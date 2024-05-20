@@ -9,7 +9,7 @@ import com.example.dooit.TodoListApplication
 interface TodoRepo {
     fun getAllListItem(): List<TodoItemWithTask>
     fun getListItem(id:Int): TodoItemWithTask
-   suspend fun insertTodoList( todoItem: TodoListEntity)
+   suspend fun insertTodoList( todoItem: TodoListEntity): Long
     suspend fun insertItem( todoList: TodoItemEntity)
    suspend fun updateTodoList( todoList: TodoListEntity)
     suspend fun updateTodoItem( todoItem: TodoItemEntity)

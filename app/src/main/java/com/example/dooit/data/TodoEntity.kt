@@ -1,6 +1,6 @@
 package com.example.dooit.data
 
-import androidx.annotation.NonNull
+
 import androidx.room.ColumnInfo
 import androidx.room.Embedded
 import androidx.room.Entity
@@ -10,10 +10,11 @@ import androidx.room.Relation
 @Entity(tableName = "todo_list")
 data class TodoListEntity(
     @PrimaryKey(autoGenerate = true)
-    val id:Int = 1,
+    val id:Int = 0,
     val title: String,
     @ColumnInfo(name="is_pinned")
-    val isPinned: Boolean= false
+    val isPinned: Boolean= false,
+    val label: String? = ""
 )
 
 @Entity(tableName = "todo_item")

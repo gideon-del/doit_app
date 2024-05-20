@@ -1,5 +1,6 @@
 package com.example.dooit.ui.screens
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -20,9 +21,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.outlined.DateRange
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
@@ -57,9 +61,10 @@ import com.example.dooit.ui.theme.DooitTheme
 fun HomeScreen(
     modifier: Modifier = Modifier,
     homeViewModel: HomeScreenViewModel = viewModel(factory = HomeScreenViewModel.Factory),
-    navigateToList: (id:Int?) -> Unit
+    navigateToList: (id: Int) -> Unit,
+    navigateToNewList: () -> Unit,
 ) {
-    val homeUiState = homeViewModel.uiState.collectAsState()
+    val homeUiState by homeViewModel.uiState.collectAsState()
 
     Scaffold(topBar = {
         CenterAlignedTopAppBar(
@@ -86,9 +91,19 @@ fun HomeScreen(
                     Icon(imageVector = Icons.Filled.Search, contentDescription = "search")
                 }
             },
-            modifier = Modifier.padding(bottom = 20.dp)
-        )
-    }) {
+            modifier = Modifier.padding(bottom = 20.dp),
+
+            )
+    },
+        floatingActionButton = {
+            if (homeUiState.todoLists.isNotEmpty()) {
+                IconButton(onClick = {
+                    navigateToNewList()
+                }, modifier=Modifier.width(65.dp).height(65.dp)) {
+                    Icon(imageVector = Icons.Filled.AddCircle, contentDescription = "Add List")
+                }
+            }
+        }) {
 
         Column(
             modifier = modifier
@@ -114,7 +129,7 @@ fun HomeScreen(
                         homeViewModel.toggleShowAll(showAll = true)
                     },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (homeUiState.value.showAll) Color.Black else Color.Transparent,
+                        containerColor = if (homeUiState.showAll) Color.Black else Color.Transparent,
                         contentColor = Color.White
                     ),
                     shape = RoundedCornerShape(10.dp),
@@ -128,7 +143,7 @@ fun HomeScreen(
                 Button(
                     onClick = { homeViewModel.toggleShowAll(false) },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (!homeUiState.value.showAll) Color.Black else Color.Transparent
+                        containerColor = if (!homeUiState.showAll) Color.Black else Color.Transparent
                     ),
                     shape = RoundedCornerShape(10.dp),
                     modifier = Modifier
@@ -138,33 +153,75 @@ fun HomeScreen(
                     Text(text = "Pinned")
                 }
             }
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(30.dp)
-            ) {
-                Box(modifier = Modifier.fillMaxWidth()) {
-                    Image(
-                        painter = painterResource(id = R.drawable.todo_svg),
-                        contentDescription = null,
-                        modifier = Modifier
-                            .width(385.dp)
-                            .height(202.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.height(20.dp))
-                Text(
-                    text = "Create your first to-do list...",
-                    style = MaterialTheme.typography.bodyLarge
-                )
-                Button(
-                    onClick = { navigateToList(null) }, colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Black, contentColor = Color.White
-                    ), shape = RoundedCornerShape(10.dp), modifier = Modifier.heightIn(min = 50.dp)
+            if (homeUiState.todoLists.isEmpty()) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(30.dp)
                 ) {
-                    Icon(imageVector = Icons.Filled.Add, contentDescription = "Add")
-                    Spacer(modifier = Modifier.width(20.dp))
-                    Text(text = "New List", style = MaterialTheme.typography.bodyMedium)
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        Image(
+                            painter = painterResource(id = R.drawable.todo_svg),
+                            contentDescription = null,
+                            modifier = Modifier
+                                .width(385.dp)
+                                .height(202.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(20.dp))
+                    Text(
+                        text = "Create your first to-do list...",
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    Button(
+                        onClick = { navigateToNewList() },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.Black, contentColor = Color.White
+                        ),
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier.heightIn(min = 50.dp)
+                    ) {
+                        Icon(imageVector = Icons.Filled.Add, contentDescription = "Add")
+                        Spacer(modifier = Modifier.width(20.dp))
+                        Text(text = "New List", style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+            } else {
+                homeUiState.todoLists.forEach {
+                    Card(
+                        onClick = {
+                                  navigateToList(it.todoList.id)
+                        },
+                        modifier = Modifier.clip(
+                            RoundedCornerShape(9.dp)
+                        ),
+                        border = BorderStroke(2.dp,Color.Black)
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.Start,
+                            verticalArrangement = Arrangement.spacedBy(10.dp),
+                            modifier = Modifier.background(color = Color(0xFFFFF6E7)).fillMaxWidth().padding(16.dp)
+                        ) {
+                            Text(
+                                text = it.todoList.title,
+                                style = MaterialTheme.typography.displayLarge
+                            )
+                            Row {
+                                if (it.todoList.label != null) {
+                                    Text(
+                                        text = it.todoList.label,
+                                        modifier = Modifier.background(color = Color.Black).width(45.dp).padding(horizontal = 4.dp, vertical = 8.dp).clip(
+                                            RoundedCornerShape(10.dp)
+                                        ),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = Color.White
+                                    )
+                                }
+
+                            }
+                        }
+                    }
+
                 }
             }
 
@@ -176,6 +233,6 @@ fun HomeScreen(
 @Composable
 fun HomeScreenPreview() {
     DooitTheme {
-        HomeScreen(navigateToList = {})
+        HomeScreen(navigateToList = {}, navigateToNewList = {})
     }
 }

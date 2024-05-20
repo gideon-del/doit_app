@@ -41,11 +41,13 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -63,144 +65,137 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.dooit.R
+import com.example.dooit.data.TodoItemEntity
+import com.example.dooit.data.TodoItemWithTask
+import com.example.dooit.data.TodoListEntity
+import com.example.dooit.ui.doitviewmodels.ListItemState
+import com.example.dooit.ui.doitviewmodels.NewListViewModel
+import com.example.dooit.ui.doitviewmodels.TodoListUIStates
 import com.example.dooit.ui.theme.DooitTheme
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.withContext
 import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
 
-data class ListItemState(
-    val id: Int,
-    var item: String,
-    var currentPosition: Offset,
-    var offsetY: Float
-)
 
-class NewListViewModel : ViewModel() {
-    private var _uiState = MutableStateFlow(
-        mutableListOf(
-            ListItemState(item = "Item 1", id = 1, currentPosition = Offset.Zero, offsetY = 0f),
-            ListItemState(item = "Item 2", id = 2, currentPosition = Offset.Zero, offsetY = 0f)
-        )
-    )
-    val uiState: StateFlow<MutableList<ListItemState>>
-        get() = _uiState
+@Composable
+fun NewListScreen(
+    modifier: Modifier = Modifier,
+    screenViewModel: NewListViewModel = viewModel(factory = NewListViewModel.Factory),
+    id: Int?,
+    navigateToHome:() -> Unit
+) {
+    val listUIStates by screenViewModel.uiState.collectAsState()
 
-    fun changeOffset(id: Int, offsetY: Float) {
-        val newList = _uiState.value.map {
-            if (it.id == id) {
-                it.copy(
-                    offsetY = offsetY + it.offsetY,
-//                    currentPosition = it.currentPosition
-                )
+    val mainScope = rememberCoroutineScope()
+    if (id == null) {
+        LaunchedEffect(key1 = "Main") {
+            coroutineScope {
+                withContext(Dispatchers.IO) {
+                    Log.d("Current", "New Todo")
+                    screenViewModel.createNewList()
+                }
 
-            } else {
-                it
             }
         }
-//        _uiState.update { itemList ->
-//            val item = itemList.find {
-//                it.id == id
-//            }
-//            if(item!=null){
-//                item.offsetY += offsetY
-//
-//            }
-//            Log.d("Current", itemList.toString())
-//            itemList
-//
-//        }
-//        _
-//        Log.d("Current", uiState.value.toString())
-        _uiState.value = newList.toMutableList()
-        Log.d("Current", _uiState.value.toString())
+    }else{
+        screenViewModel.getList(id)
     }
 
-    fun setGlobalPosition(id: Int, position: Offset) {
-        val newPositionList = _uiState.value.map {
-            if (it.id == id) {
-                it.copy(
-                    currentPosition = position
-                )
-            } else {
-                it
-            }
-        }
-
-
-        _uiState.value = newPositionList.toMutableList()
-        Log.d("Current", _uiState.value.toString())
-    }
-
-    fun changePosition(id: Int, position: Offset) {
-        _uiState.value = _uiState.value.map { item ->
-            if (item.id == id) {
-                item.currentPosition = position
-                item.offsetY = position.y
-                item
-            } else {
-                item
-            }
-        }.toMutableList()
-        Log.d("Current", _uiState.value.toString())
-
-
-    }
-
-    fun calculateNextIndex(id: Int): Float {
-        val item = _uiState.value.find { it.id == id }
-        if (item == null) {
-            return 0f
-        } else {
-            val mainOffset = item.offsetY / 100
-            return mainOffset
+    when (listUIStates) {
+        is TodoListUIStates.Loading -> LoadingScreen(modifier = modifier.fillMaxSize())
+        is TodoListUIStates.Error -> ErrorScreen(modifier = modifier.fillMaxSize(), onRetry = {})
+        is TodoListUIStates.Success -> {
+            SuccessScreen(
+                listItem = (listUIStates as TodoListUIStates.Success).item,
+                onChangeTodo = {
+                    screenViewModel.updateTodoItem(it)
+                },
+                onUpdateTodoList = {
+                    screenViewModel.updateTodoList(it)
+                },
+                navigateToHome = navigateToHome)
         }
     }
 }
 
 @Composable
-fun NewListScreen(modifier: Modifier = Modifier, screenViewModel: NewListViewModel = viewModel(), id:Int?) {
+fun SuccessScreen(
+    modifier: Modifier = Modifier,
+    listItem: TodoItemWithTask,
+    onChangeTodo: (TodoItemEntity) -> Unit,
+    onUpdateTodoList:(TodoListEntity) -> Unit,
 
+navigateToHome: () -> Unit
+) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        topBar = { NewListTopBar(modifier = Modifier.padding(horizontal = 10.dp)) }) {
+        topBar = { NewListTopBar(modifier = Modifier.padding(horizontal = 10.dp), navigateToHome) }) {
         Column(
             modifier = Modifier
                 .padding(it)
                 .fillMaxWidth()
                 .fillMaxHeight()
         ) {
-            Column(modifier= Modifier.weight(1f).fillMaxWidth()) {
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+            ) {
                 Box(modifier = Modifier.padding(horizontal = 10.dp)) {
                     TextField(
-                        value = "Title",
-                        onValueChange = {/*TODO*/ },
+                        value = listItem.todoList.title,
+                        onValueChange = {
+                            onUpdateTodoList(listItem.todoList.copy(
+                                title = it
+                            ))
+                        },
                         colors = TextFieldDefaults.colors(
                             unfocusedContainerColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent
+                            unfocusedIndicatorColor = Color.Transparent,
+                            focusedContainerColor = Color.Transparent,
+                            focusedIndicatorColor = Color.Transparent
                         )
                     )
 
                 }
                 Column {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Checkbox(
-                            checked = false,
-                            onCheckedChange = {/*TODO*/ },
-                            modifier = Modifier.clip(shape = RoundedCornerShape(100.dp))
-                        )
-                        TextField(
-                            value = "",
-                            onValueChange = {},
-                            colors = TextFieldDefaults.colors(
-                                unfocusedContainerColor = Color.Transparent,
-                                unfocusedIndicatorColor = Color.Transparent
-                            ),
-                            modifier = Modifier.padding(0.dp),
-                            placeholder = { Text(text = "To-do", color = Color(0xFF8C8E8F)) })
+                    listItem.items.forEach { todoItem ->
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Checkbox(
+                                checked = todoItem.isDone,
+                                onCheckedChange = {
+                                    onChangeTodo(
+                                        todoItem.copy(
+                                            isDone = it
+                                        )
+                                    )
+                                },
+                                modifier = Modifier.clip(shape = RoundedCornerShape(100.dp))
+                            )
+                            TextField(
+                                value = todoItem.task,
+                                onValueChange = {
+                                    onChangeTodo(
+                                        todoItem.copy(
+                                            task = it
+                                        )
+                                    )
+                                },
+                                colors = TextFieldDefaults.colors(
+                                    unfocusedContainerColor = Color.Transparent,
+                                    unfocusedIndicatorColor = Color.Transparent
+                                ),
+                                modifier = Modifier.padding(0.dp),
+                                placeholder = { Text(text = "To-do", color = Color(0xFF8C8E8F)) })
+                        }
                     }
+
                     Row(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -216,7 +211,9 @@ fun NewListScreen(modifier: Modifier = Modifier, screenViewModel: NewListViewMod
                             onValueChange = {},
                             colors = TextFieldDefaults.colors(
                                 unfocusedContainerColor = Color.Transparent,
-                                unfocusedIndicatorColor = Color.Transparent
+                                unfocusedIndicatorColor = Color.Transparent,
+                                focusedContainerColor = Color.Transparent,
+                                focusedIndicatorColor = Color.Transparent
                             ),
                             modifier = Modifier.padding(0.dp),
                             placeholder = { Text(text = "To-do", color = Color(0xFF8C8E8F)) })
@@ -225,97 +222,44 @@ fun NewListScreen(modifier: Modifier = Modifier, screenViewModel: NewListViewMod
                 }
             }
 
-            Column(modifier= Modifier.padding(horizontal = 8.dp, vertical = 20.dp)) {
+            Column(modifier = Modifier.padding(horizontal = 8.dp, vertical = 20.dp)) {
+                val labels = listOf("Personal", "Work", "Finance", "Other")
                 Text(text = "Choose a label", style = MaterialTheme.typography.bodyMedium)
                 Spacer(Modifier.height(20.dp))
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(space = 3.dp, alignment = Alignment.CenterHorizontally),
+                    horizontalArrangement = Arrangement.spacedBy(
+                        space = 3.dp,
+                        alignment = Alignment.CenterHorizontally
+                    ),
                     modifier = Modifier
                         .fillMaxWidth()
 
                 ) {
-                    Button(
-                        onClick = { /*TODO*/ },
-                        shape = RoundedCornerShape(10.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color.Black,
-                            contentColor = Color.White
-                        )
-                    ) {
-                        Text(text = "Personal")
+                    labels.forEach {
+                        Button(
+                            onClick = {
+                                onUpdateTodoList(listItem.todoList.copy(
+                                    label = it
+                                ))
+                            },
+                            shape = RoundedCornerShape(10.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (listItem.todoList.label == it) Color.Black else Color(
+                                    0xFF898989
+                                ),
+                                contentColor = Color.White
+                            )
+                        ) {
+                            Text(text = it)
+                        }
                     }
 
-                    Button(
-                        onClick = { /*TODO*/ },
-                        shape = RoundedCornerShape(10.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF898989),
-                            contentColor = Color.White
-                        )
-                    ) {
-                        Text(text = "Work")
-                    }
 
-                    Button(
-                        onClick = { /*TODO*/ },
-                        shape = RoundedCornerShape(10.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF898989),
-                            contentColor = Color.White
-                        )
-                    ) {
-                        Text(text = "Finance")
-                    }
-
-                    Button(
-                        onClick = { /*TODO*/ },
-                        shape = RoundedCornerShape(10.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF898989),
-                            contentColor = Color.White
-                        )
-                    ) {
-                        Text(text = "Other", softWrap = false)
-                    }
 
                 }
 
             }
-//            LazyColumn {
-//                items(mainState) {item->
-//                    ListItem(
-//                        itemIndex = mainState.indexOf(item),
-//                        totalSize = mainState.size,
-//                        item = item,
-//                        modifier = Modifier.onGloballyPositioned {coordinates ->
-//                            println(coordinates.positionInWindow().toString())
-//                            screenViewModel.setGlobalPosition(item.id ,coordinates.positionInWindow())
-//                        },
-//                        dragEvent = {offsetY ->
-//                            screenViewModel.changeOffset(item.id, offsetY)
-//                        },
-//                        getItemList ={
-//                            Log.d("Current", it.toString())
-//                            if(it <= mainState.size){
-//                                mainState[it]
-//                            } else {
-//                                null
-//                            }
-//
-//
-//                        },
-//                        dropItem = { item, currentPosition ->
-//                            screenViewModel.changePosition(item.id,currentPosition)
-//                        },
-//                        calculatePosition = {
-//
-//                            screenViewModel.calculateNextIndex(it)
-//                        }
-//                        )
-//
-//
-//                }
-//            }
+
 
 
         }
@@ -323,84 +267,28 @@ fun NewListScreen(modifier: Modifier = Modifier, screenViewModel: NewListViewMod
 }
 
 @Composable
-fun ListItem(
-    modifier: Modifier = Modifier,
-    itemIndex: Int,
-    totalSize: Int,
-    dragEvent: (Float) -> Unit,
-    item: ListItemState,
-    getItemList: (id: Int) -> ListItemState?,
-    dropItem: (item: ListItemState, currentPosition: Offset) -> Unit,
-    calculatePosition: (Int) -> Float
+fun LoadingScreen(modifier: Modifier = Modifier) {
+    Column(modifier = Modifier) {
+        Text(text = "Loading")
+    }
 
-) {
+}
 
-    Button(
-        onClick = {},
-        modifier = modifier
-            .width(100.dp)
-            .height(100.dp)
-            .offset {
-                IntOffset(x = 0, y = item.offsetY.roundToInt())
-            }
-            .pointerInput(Unit) {
-                detectDragGestures(
-                    onDragEnd = {
-                        Log.d(
-                            "Current",
-                            "${item.offsetY} ,${item.offsetY},${item.toString()},"
-                        )
-                        val mainOffset = calculatePosition(item.id)
-                        val nextItem = mainOffset.toInt()
-//                            .coerceIn(
-//                                if (itemIndex == 0) 0 else -itemIndex,
-//                                if (totalSize - itemIndex == 1) 0 else totalSize - itemIndex
-//                            )
-                        Log.d(
-                            "Current",
-                            "${
-                                IntOffset(
-                                    x = 0,
-                                    y = nextItem
-                                )
-                            }, $mainOffset, $itemIndex ,${nextItem - itemIndex}"
-                        )
-                        val dropTarget = getItemList(nextItem + itemIndex)
-                        Log.d("Current", dropTarget.toString())
-                        if (dropTarget == item) {
-
-                            dropItem(item, item.currentPosition)
-                        } else {
-                            val tempCordinate = getItemList(itemIndex)!!.currentPosition
-                            dropItem(item, dropTarget!!.currentPosition)
-                            dropItem(dropTarget, tempCordinate)
-
-                        }
-
-                    },
-                ) { change, dragAmount ->
-
-                    change.consume()
-
-                    dragEvent(dragAmount.y)
-
-
-//                    Log.d("Current", dragAmount.y.toString())
-                }
-
-
-            }
-    ) {
-
-        Text(text = "${item.currentPosition.y}")
+@Composable
+fun ErrorScreen(modifier: Modifier = Modifier, onRetry: () -> Unit) {
+    Column(modifier = modifier) {
+        Text(text = "Error")
+        Button(onClick = onRetry) {
+            Text(text = "Retry")
+        }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NewListTopBar(modifier: Modifier = Modifier) {
+fun NewListTopBar(modifier: Modifier = Modifier, navigateToHome: () -> Unit) {
     CenterAlignedTopAppBar(title = { /*TODO*/ }, modifier = modifier, navigationIcon = {
-        IconButton(onClick = { /*TODO*/ }) {
+        IconButton(onClick =navigateToHome) {
             Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Arrow Back")
         }
 
@@ -430,7 +318,7 @@ fun NewListTopBar(modifier: Modifier = Modifier) {
 fun NewListScreenPreview() {
     DooitTheme {
         Surface(modifier = Modifier.fillMaxSize()) {
-            NewListScreen(id=null)
+            NewListScreen(id = null, navigateToHome = {})
         }
 
     }

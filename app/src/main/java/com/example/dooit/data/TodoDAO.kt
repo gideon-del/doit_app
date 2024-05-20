@@ -17,13 +17,14 @@ interface TodoDAO {
     suspend fun insertItem( todoList: TodoItemEntity)
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insertTodoList( todoItem: TodoListEntity)
+    suspend fun insertTodoList( todoItem: TodoListEntity): Long
 
     @Update
   suspend  fun updateTodoList( todoLis: TodoListEntity)
 
     @Update
    suspend fun updateTodoItem( todoItem: TodoItemEntity)
+
 
 
 }
