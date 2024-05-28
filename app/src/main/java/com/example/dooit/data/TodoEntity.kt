@@ -7,6 +7,7 @@ import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.Relation
+import kotlinx.serialization.Serializable
 
 @Entity(tableName = "todo_list")
 data class TodoListEntity(
@@ -30,7 +31,7 @@ data class TodoItemEntity(
 @Entity(tableName = "images")
 data class ImageEntity(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
-    val uri: Uri,
+    val uri: String,
     val todoListId: Int
 )
 data class TodoItemWithTask(

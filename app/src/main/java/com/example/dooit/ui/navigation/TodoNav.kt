@@ -38,6 +38,7 @@ fun TodoNav(modifier: Modifier = Modifier,  todoNavViewModel: TodoNavViewModel =
 )) {
     val navController: NavController = rememberNavController()
     val todoState by todoNavViewModel.uiState.collectAsStateWithLifecycle()
+
     NavHost(
         navController = navController as NavHostController,
         startDestination = if(todoState) HomeScreenRoute else WelcomeScreenRoute,
