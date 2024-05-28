@@ -1,6 +1,7 @@
 package com.example.dooit.data
 
 
+import android.net.Uri
 import androidx.room.ColumnInfo
 import androidx.room.Embedded
 import androidx.room.Entity
@@ -26,12 +27,23 @@ data class TodoItemEntity(
     val todoItemId: Int
 )
 
-
+@Entity(tableName = "images")
+data class ImageEntity(
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    val uri: Uri,
+    val todoListId: Int
+)
 data class TodoItemWithTask(
     @Embedded val todoList: TodoListEntity,
     @Relation(
         parentColumn = "id",
         entityColumn = "todoItemId"
     )
-    val items: List<TodoItemEntity>
+    val items: List<TodoItemEntity>,
+
+    @Relation(
+        parentColumn = "id",
+        entityColumn = "todoListId"
+    )
+    val images: List<ImageEntity>
     )

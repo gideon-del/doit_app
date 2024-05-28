@@ -62,6 +62,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.dooit.R
@@ -225,6 +226,7 @@ navigateToHome: () -> Unit
             Column(modifier = Modifier.padding(horizontal = 8.dp, vertical = 20.dp)) {
                 val labels = listOf("Personal", "Work", "Finance", "Other")
                 Text(text = "Choose a label", style = MaterialTheme.typography.bodyMedium)
+
                 Spacer(Modifier.height(20.dp))
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(
