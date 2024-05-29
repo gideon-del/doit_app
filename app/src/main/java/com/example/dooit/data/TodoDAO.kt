@@ -25,6 +25,8 @@ interface TodoDAO {
     @Update
    suspend fun updateTodoItem( todoItem: TodoItemEntity)
 
+   @Insert(onConflict = OnConflictStrategy.IGNORE)
+   suspend fun insertImage(image: ImageEntity): Long
 
 
 }

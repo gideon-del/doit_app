@@ -13,8 +13,11 @@ private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(na
 class TodoListApplication: Application() {
     lateinit var container: AppConainer
     lateinit var appStatus: AppPreference
+
     override fun onCreate() {
+
         super.onCreate()
+
         container = DefaultContainer(this)
         appStatus = AppPreference(dataStore)
     }
