@@ -1,5 +1,6 @@
 package com.example.dooit.ui.doitviewmodels
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -9,6 +10,7 @@ class PermissionsViewModel: ViewModel() {
     private val _deniedPermissions = MutableStateFlow<MutableList<String>>(mutableListOf())
     var deniedPermissions = _deniedPermissions.asStateFlow()
     fun addToDeniedPermissions(permission: String, isGranted: Boolean) {
+        Log.d("Permission","$permission -> $isGranted")
         if(!isGranted && !_deniedPermissions.value.contains(permission)){
             _deniedPermissions.update {
                 it.add(permission)
@@ -18,6 +20,7 @@ class PermissionsViewModel: ViewModel() {
     }
     fun removePermission() {
         if(_deniedPermissions.value.size >0){
+
             _deniedPermissions.update {
                 it.removeFirst()
                 it
