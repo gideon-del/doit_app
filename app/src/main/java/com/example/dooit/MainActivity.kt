@@ -1,11 +1,8 @@
 package com.example.dooit
 
 import android.Manifest
-import android.content.Intent
-import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -34,9 +31,9 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             DooitTheme {
-                var permissionsViewModel: PermissionsViewModel = viewModel()
+                val permissionsViewModel: PermissionsViewModel = viewModel()
                 val permissionsList by permissionsViewModel.deniedPermissions.collectAsStateWithLifecycle()
-                var multiplePermissionRequest =
+                val multiplePermissionRequest =
                     rememberLauncherForActivityResult(contract = ActivityResultContracts.RequestMultiplePermissions()) { perm ->
                         perm.forEach { permission ->
                             permissionsViewModel.addToDeniedPermissions(
@@ -127,9 +124,6 @@ fun PermissionDialog(
         },
         text = {
             Text(text = "Grant the app the following permissions in order for the app to perform well")
-        })
+        }, modifier = modifier)
 }
 
-interface PermissionTypes {
-    fun getPermission()
-}

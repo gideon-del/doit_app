@@ -1,9 +1,7 @@
 package com.example.dooit.ui.doitviewmodels
 
-import android.content.Intent
+
 import android.util.Log
-import androidx.compose.ui.geometry.Offset
-import android.app.Activity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -17,18 +15,11 @@ import com.example.dooit.data.TodoRepo
 import com.example.dooit.data.todoApplication
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.IOError
 
-data class ListItemState(
-    val id: Int,
-    var item: String,
-
-    )
 
 sealed class TodoListUIStates {
     data class Success(val item: TodoItemWithTask) : TodoListUIStates()
@@ -37,7 +28,6 @@ sealed class TodoListUIStates {
 }
 
 class NewListViewModel(private val todoRepo: TodoRepo) : ViewModel() {
-    private val IMAGE_FILE = 2
     private val _uiState = MutableStateFlow<TodoListUIStates>(TodoListUIStates.Loading)
     val uiState = _uiState.asStateFlow()
     fun getList(id: Int) {
