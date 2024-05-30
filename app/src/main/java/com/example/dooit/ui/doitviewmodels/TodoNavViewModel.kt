@@ -12,21 +12,25 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-
+sealed class TodoNavState {
+    data object Loading: TodoNavState()
+     data class Success(val isFirstTime: Boolean): TodoNavState()
+}
 class TodoNavViewModel(
    private val  appPreference: AppPreference
 ):ViewModel() {
-    val uiState: StateFlow<Boolean> = appPreference.firstTime.map {
-        it
+    val uiState: StateFlow<TodoNavState> = appPreference.firstTime.map {
+        TodoNavState.Success(it)
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = false
+        initialValue = TodoNavState.Loading
     )
 
     fun changeStatus() {
         viewModelScope.launch {
             appPreference.updateStatus()
+            
         }
     }
     companion object{
