@@ -14,6 +14,7 @@ interface TodoRepo {
     suspend fun updateTodoList(todoList: TodoListEntity)
     suspend fun updateTodoItem(todoItem: TodoItemEntity)
     suspend fun insertImage(image: ImageEntity): Long
+    suspend fun insertAudio(audiEntity: AudiEntity): Long
 }
 
 interface AppConainer {
@@ -28,6 +29,7 @@ class OfflineRepo(private val itemDAO: TodoDAO) : TodoRepo {
     override suspend fun updateTodoItem(todoItem: TodoItemEntity) = itemDAO.updateTodoItem(todoItem)
     override suspend fun updateTodoList(todoList: TodoListEntity) = itemDAO.updateTodoList(todoList)
     override suspend fun insertImage(image: ImageEntity): Long = itemDAO.insertImage(image)
+    override suspend fun insertAudio(audiEntity: AudiEntity): Long = itemDAO.insertAudio(audiEntity)
 }
 
 class DefaultContainer(context: Context) : AppConainer {

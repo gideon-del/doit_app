@@ -6,8 +6,8 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 
 @Database(
-    version = 5,
-    entities = [TodoItemEntity::class, TodoListEntity::class, ImageEntity::class],
+    version = 6,
+    entities = [TodoItemEntity::class, TodoListEntity::class, ImageEntity::class, AudiEntity::class],
     exportSchema = false
 )
 abstract class TodoListDB() : RoomDatabase() {

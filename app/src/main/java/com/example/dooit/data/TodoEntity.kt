@@ -34,6 +34,12 @@ data class ImageEntity(
     val uri: String,
     val todoListId: Int
 )
+@Entity(tableName = "audio")
+data class AudiEntity(
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    val uri: String,
+    val todoListId: Int
+)
 data class TodoItemWithTask(
     @Embedded val todoList: TodoListEntity,
     @Relation(
@@ -46,5 +52,10 @@ data class TodoItemWithTask(
         parentColumn = "id",
         entityColumn = "todoListId"
     )
-    val images: List<ImageEntity>
+    val images: List<ImageEntity>,
+    @Relation(
+parentColumn = "id",
+entityColumn = "todoListId"
+)
+val audio: List<AudiEntity>
     )

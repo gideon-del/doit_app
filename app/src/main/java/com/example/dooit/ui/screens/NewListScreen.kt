@@ -41,6 +41,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.outlined.Star
+import androidx.compose.material.icons.sharp.CheckCircle
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -81,6 +84,7 @@ import com.example.dooit.R
 import com.example.dooit.data.TodoItemEntity
 import com.example.dooit.data.TodoItemWithTask
 import com.example.dooit.data.TodoListEntity
+import com.example.dooit.ui.LoadingScreen
 import com.example.dooit.ui.doitviewmodels.NewListViewModel
 import com.example.dooit.ui.doitviewmodels.TodoListUIStates
 import com.example.dooit.ui.theme.DooitTheme
@@ -102,8 +106,9 @@ fun NewListScreen(
     val getContent =
         rememberLauncherForActivityResult(contract = ActivityResultContracts.OpenDocument()) { imageUri ->
             if (imageUri != null && listUIStates is TodoListUIStates.Success) {
-                val tags = Intent.FLAG_GRANT_WRITE_URI_PERMISSION or Intent.FLAG_GRANT_READ_URI_PERMISSION
-            context.contentResolver.takePersistableUriPermission(imageUri, tags)
+                val tags =
+                    Intent.FLAG_GRANT_WRITE_URI_PERMISSION or Intent.FLAG_GRANT_READ_URI_PERMISSION
+                context.contentResolver.takePersistableUriPermission(imageUri, tags)
                 screenViewModel.uploadImage(imageUri.toString())
 
 
@@ -111,7 +116,7 @@ fun NewListScreen(
         }
 
     if (id == null) {
-        LaunchedEffect(key1 = "Main") {
+        LaunchedEffect(Unit) {
             coroutineScope {
                 withContext(Dispatchers.IO) {
                     Log.d("Current", "New Todo")
@@ -139,7 +144,8 @@ fun NewListScreen(
                 navigateToHome = navigateToHome,
                 uploadImage = {
                     getContent.launch(arrayOf("image/*"))
-                }
+                },
+                screenViewModel = screenViewModel
             )
         }
     }
@@ -192,6 +198,61 @@ fun ImageList(modifier: Modifier = Modifier, uri: String) {
     }
 }
 
+sealed class PlayerStatus {
+    object Playing : PlayerStatus()
+    object Paused : PlayerStatus()
+    object Idle : PlayerStatus()
+}
+
+@Composable
+fun AudioList(
+    modifier: Modifier = Modifier,
+    onStartPlayer: () -> Unit,
+    onPausePlayer: () -> Unit,
+    onStopPlayer: () -> Unit,
+    onResumePlayer: () -> Unit
+) {
+    var playerStatus: PlayerStatus by remember {
+        mutableStateOf(PlayerStatus.Idle)
+    }
+    Row(modifier = modifier) {
+        IconButton(onClick = {
+            when (playerStatus) {
+                is PlayerStatus.Idle -> {
+                    onStartPlayer()
+                    playerStatus = PlayerStatus.Playing
+                }
+
+                is PlayerStatus.Playing -> {
+                    onPausePlayer()
+                    playerStatus = PlayerStatus.Paused
+                }
+
+                is PlayerStatus.Paused -> {
+                    onResumePlayer()
+                    playerStatus = PlayerStatus.Playing
+                }
+            }
+        }) {
+            Icon(
+                imageVector = when (playerStatus) {
+                    is PlayerStatus.Idle -> Icons.Filled.PlayArrow
+                    is PlayerStatus.Playing -> Icons.Sharp.CheckCircle
+                    is PlayerStatus.Paused -> Icons.Filled.PlayArrow
+                }, contentDescription = null
+            )
+        }
+        if (playerStatus is PlayerStatus.Playing || playerStatus is PlayerStatus.Paused) {
+            IconButton(onClick = {
+                onStopPlayer()
+                playerStatus = PlayerStatus.Idle
+            }) {
+                Icon(imageVector = Icons.Outlined.Star, contentDescription = "Stop Player")
+            }
+        }
+    }
+}
+
 @Composable
 fun SuccessScreen(
     modifier: Modifier = Modifier,
@@ -199,7 +260,8 @@ fun SuccessScreen(
     onChangeTodo: (TodoItemEntity) -> Unit,
     onUpdateTodoList: (TodoListEntity) -> Unit,
     uploadImage: () -> Unit,
-    navigateToHome: () -> Unit
+    navigateToHome: () -> Unit,
+    screenViewModel: NewListViewModel
 ) {
 
     Scaffold(
@@ -223,6 +285,7 @@ fun SuccessScreen(
                 Column(
                     modifier = Modifier.fillMaxWidth()
                 ) {
+                    val context = LocalContext.current
                     Box(modifier = Modifier.padding(horizontal = 10.dp)) {
                         TextField(
                             value = listItem.todoList.title,
@@ -315,6 +378,48 @@ fun SuccessScreen(
                             }
                         }
 
+                        if (listItem.audio.isEmpty()) {
+                            var audioFile: File? by remember {
+                                mutableStateOf(null)
+                            }
+
+                            val dir = context.cacheDir
+                            val startRecording = {
+                                audioFile = File(
+                                    dir,
+                                    "${listItem.todoList.id}${listItem.audio.size + 1}.mp3"
+                                )
+                                screenViewModel.startRecording(context, audioFile!!)
+                            }
+                            val stopRecording = {
+                                screenViewModel.stopRecording(audioFile!!, context)
+                                audioFile = null
+                            }
+                            RecordButton(
+                                onStartRecord = startRecording,
+                                onStopRecord = stopRecording
+                            )
+                        }
+                        LazyColumn(modifier = Modifier.fillMaxWidth()) {
+                            items(items = listItem.audio) { audioFile ->
+                                AudioList(
+                                    onStartPlayer = {
+                                        screenViewModel.startPlayer(
+                                            Uri.parse(audioFile.uri),
+                                            context
+                                        )
+                                    },
+                                    onPausePlayer = {
+                                        screenViewModel.pausePlayer()
+                                    },
+                                    onStopPlayer = {
+                                        screenViewModel.stopPlayer()
+                                    },
+                                    onResumePlayer = {
+                                        screenViewModel.resumePlayer()
+                                    })
+                            }
+                        }
                     }
                 }
             }
@@ -364,16 +469,28 @@ fun SuccessScreen(
 }
 
 @Composable
-fun LoadingScreen(modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(color = MaterialTheme.colorScheme.background)
-    ) {
-        CircularProgressIndicator()
+fun RecordButton(
+    modifier: Modifier = Modifier,
+    onStartRecord: () -> Unit,
+    onStopRecord: () -> Unit
+) {
+    var recording by remember {
+        mutableStateOf(false)
     }
 
+    Button(onClick = {
+        if (recording) {
+            onStopRecord()
+            recording = false
+        } else {
+            onStartRecord()
+            recording = true
+        }
+    }) {
+        Text(text = if (recording) "Stop Recording" else "Add audio")
+    }
 }
+
 
 @Composable
 fun ErrorScreen(modifier: Modifier = Modifier, onRetry: () -> Unit) {

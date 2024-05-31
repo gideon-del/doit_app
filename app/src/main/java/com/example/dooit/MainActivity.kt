@@ -48,17 +48,19 @@ class MainActivity : ComponentActivity() {
                             arrayOf(
                                 Manifest.permission.RECORD_AUDIO,
                                 Manifest.permission.READ_MEDIA_IMAGES,
-                                Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED
+                                Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED,
+                                Manifest.permission.WRITE_EXTERNAL_STORAGE
                             )
                         }else if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                             arrayOf(
                                 Manifest.permission.RECORD_AUDIO,
                                 Manifest.permission.READ_MEDIA_IMAGES,
-
+                                Manifest.permission.WRITE_EXTERNAL_STORAGE
                             )
                         }else arrayOf(
                             Manifest.permission.RECORD_AUDIO,
-                            Manifest.permission.READ_EXTERNAL_STORAGE
+                            Manifest.permission.READ_EXTERNAL_STORAGE,
+                            Manifest.permission.WRITE_EXTERNAL_STORAGE
                         )
                     )
                 }
