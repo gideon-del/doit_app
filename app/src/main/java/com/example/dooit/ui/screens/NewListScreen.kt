@@ -41,6 +41,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Done
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material.icons.sharp.CheckCircle
@@ -49,6 +51,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -234,20 +237,21 @@ fun AudioList(
                 }
             }
         }) {
-            Icon(
-                imageVector = when (playerStatus) {
-                    is PlayerStatus.Idle -> Icons.Filled.PlayArrow
-                    is PlayerStatus.Playing -> Icons.Sharp.CheckCircle
-                    is PlayerStatus.Paused -> Icons.Filled.PlayArrow
-                }, contentDescription = null
-            )
+            if(playerStatus is PlayerStatus.Idle || playerStatus is PlayerStatus.Paused){
+                Icon(
+                    imageVector =Icons.Filled.PlayArrow, contentDescription = null
+                )
+            }else{
+              Icon(painter = painterResource(id = R.drawable.pause_icon), contentDescription ="Pause Music" )  
+            }
+            
         }
         if (playerStatus is PlayerStatus.Playing || playerStatus is PlayerStatus.Paused) {
             IconButton(onClick = {
                 onStopPlayer()
                 playerStatus = PlayerStatus.Idle
             }) {
-                Icon(imageVector = Icons.Outlined.Star, contentDescription = "Stop Player")
+                Icon(painter = painterResource(id = R.drawable.stop_icon), contentDescription = "Stop Player")
             }
         }
     }
@@ -527,6 +531,30 @@ fun NewListTopBar(modifier: Modifier = Modifier, navigateToHome: () -> Unit) {
                 )
                 Spacer(modifier = Modifier.width(10.dp))
                 Text(text = "Pin")
+            }
+            Column {
+                val showDropDown by remember {
+                    mutableStateOf(false)
+                }
+                IconButton(onClick = { /*TODO*/ }) {
+                    Icon(imageVector = Icons.Filled.MoreVert, contentDescription = "Menu")
+                }
+                DropdownMenu(expanded = showDropDown, onDismissRequest = { /*TODO*/ }) {
+                    Button(onClick = { /*TODO*/ }) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.image_icon),
+                            contentDescription = "Add Image"
+                        )
+                        Text(text = "Add Image")
+                    }
+                    Button(onClick = { /*TODO*/ }) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.mic_icon),
+                            contentDescription = "Add Image"
+                        )
+                        Text(text = "Add Image")
+                    }
+                }
             }
         })
 }
