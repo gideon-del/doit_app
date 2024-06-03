@@ -69,14 +69,14 @@ fun HomeScreen(
     navigateToNewList: () -> Unit,
 ) {
     val homeUiState by homeViewModel.uiState.collectAsStateWithLifecycle()
-    LaunchedEffect(key1 = "Main") {
+    LaunchedEffect(Unit) {
         withContext(Dispatchers.IO){
             homeViewModel.getAllList()
         }
     }
     Scaffold(topBar = {
         CenterAlignedTopAppBar(
-            title = { /*TODO*/ },
+            title = { },
             navigationIcon = {
                 IconButton(
                     onClick = { /*TODO*/ },
@@ -211,7 +211,7 @@ fun HomeScreen(
                             horizontalAlignment = Alignment.Start,
                             verticalArrangement = Arrangement.spacedBy(10.dp),
                             modifier = Modifier
-                                .background(color = Color(0xFFFFF6E7))
+
                                 .fillMaxWidth()
                                 .padding(16.dp)
                         ) {
@@ -225,7 +225,6 @@ fun HomeScreen(
                                         text = it.todoList.label,
                                         modifier = Modifier
                                             .background(color = Color.Black)
-                                            .width(45.dp)
                                             .padding(horizontal = 4.dp, vertical = 8.dp)
                                             .clip(
                                                 RoundedCornerShape(10.dp)

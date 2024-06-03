@@ -151,7 +151,20 @@ class NewListViewModel(private val todoRepo: TodoRepo) : ViewModel() {
 
 
     }
-
+    fun addTodoItem() {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO){
+                val todoListId = (_uiState.value as TodoListUIStates.Success).item.todoList.id
+                todoRepo.insertItem(TodoItemEntity(task = "", todoItemId = todoListId))
+                _uiState.value = try {
+                    val updatedList = todoRepo.getListItem(todoListId)
+                    TodoListUIStates.Success(item = updatedList)
+                } catch (e: IOError){
+                    TodoListUIStates.Error
+                }
+            }
+        }
+    }
     fun updateTodoItem(todoItemEntity: TodoItemEntity) {
         viewModelScope.launch {
             withContext(Dispatchers.IO) {

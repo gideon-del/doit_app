@@ -2,32 +2,18 @@ package com.example.dooit.ui.screens
 
 
 import android.Manifest
-import android.app.Activity
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.database.Cursor
-import android.graphics.ImageDecoder
 import android.net.Uri
 import android.os.Build
-import android.os.CancellationSignal
-import android.provider.DocumentsContract
-import android.provider.MediaStore
-import android.provider.OpenableColumns
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
-import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.RequiresApi
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -41,16 +27,12 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.outlined.Star
-import androidx.compose.material.icons.sharp.CheckCircle
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -72,16 +54,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
-import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import com.example.dooit.R
 import com.example.dooit.data.TodoItemEntity
@@ -138,9 +119,7 @@ fun NewListScreen(
         is TodoListUIStates.Success -> {
             SuccessScreen(
                 listItem = (listUIStates as TodoListUIStates.Success).item,
-                onChangeTodo = {
-                    screenViewModel.updateTodoItem(it)
-                },
+
                 onUpdateTodoList = {
                     screenViewModel.updateTodoList(it)
                 },
@@ -202,9 +181,9 @@ fun ImageList(modifier: Modifier = Modifier, uri: String) {
 }
 
 sealed class PlayerStatus {
-    object Playing : PlayerStatus()
-    object Paused : PlayerStatus()
-    object Idle : PlayerStatus()
+    data object Playing : PlayerStatus()
+    data object Paused : PlayerStatus()
+    data object Idle : PlayerStatus()
 }
 
 @Composable
@@ -261,24 +240,28 @@ fun AudioList(
 fun SuccessScreen(
     modifier: Modifier = Modifier,
     listItem: TodoItemWithTask,
-    onChangeTodo: (TodoItemEntity) -> Unit,
     onUpdateTodoList: (TodoListEntity) -> Unit,
     uploadImage: () -> Unit,
     navigateToHome: () -> Unit,
     screenViewModel: NewListViewModel
 ) {
+    val context = LocalContext.current
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
         topBar = {
+
             NewListTopBar(
                 modifier = Modifier.padding(horizontal = 10.dp),
-                navigateToHome
+                navigateToHome,
+               uploadImage = {
+                  uploadImage()
+               }
             )
         }) {
         Column(modifier = Modifier.padding(it)) {
 
-            Column {
+            Column(modifier=Modifier.weight(1f)) {
 
                 listItem.images.forEach { image ->
 
@@ -289,14 +272,14 @@ fun SuccessScreen(
                 Column(
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    val context = LocalContext.current
+
                     Box(modifier = Modifier.padding(horizontal = 10.dp)) {
                         TextField(
                             value = listItem.todoList.title,
-                            onValueChange = {
+                            onValueChange = {title->
                                 onUpdateTodoList(
                                     listItem.todoList.copy(
-                                        title = it
+                                        title = title
                                     )
                                 )
                             },
@@ -311,76 +294,26 @@ fun SuccessScreen(
                     }
                     Column {
                         listItem.items.forEach { todoItem ->
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Checkbox(
-                                    checked = todoItem.isDone,
-                                    onCheckedChange = {
-                                        onChangeTodo(
-                                            todoItem.copy(
-                                                isDone = it
-                                            )
-                                        )
-                                    },
-                                    modifier = Modifier.clip(shape = RoundedCornerShape(100.dp))
-                                )
-                                TextField(
-                                    value = todoItem.task,
-                                    onValueChange = {
-                                        onChangeTodo(
-                                            todoItem.copy(
-                                                task = it
-                                            )
-                                        )
-                                    },
-                                    colors = TextFieldDefaults.colors(
-                                        unfocusedContainerColor = Color.Transparent,
-                                        unfocusedIndicatorColor = Color.Transparent
-                                    ),
-                                    modifier = Modifier.padding(0.dp),
-                                    placeholder = {
-                                        Text(
-                                            text = "To-do",
-                                            color = Color(0xFF8C8E8F)
-                                        )
-                                    })
-                            }
+                        TodoItem(todoItem = todoItem, onChangeTodo = {updatedTodo->
+                            screenViewModel.updateTodoItem(updatedTodo)
+                        })
                         }
 
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            IconButton(onClick = { /*TODO*/ }) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.add_btn),
-                                    contentDescription = null,
-                                    modifier = Modifier.sizeIn(
-                                        minWidth = 25.dp,
-                                        minHeight = 25.dp
-                                    )
+                        Button(onClick = {
+                            screenViewModel.addTodoItem()
+                        }) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.add_btn),
+                                contentDescription = null,
+                                modifier = Modifier.sizeIn(
+                                    minWidth = 25.dp,
+                                    minHeight = 25.dp
                                 )
-                            }
-                            TextField(
-                                value = "",
-                                onValueChange = {},
-                                colors = TextFieldDefaults.colors(
-                                    unfocusedContainerColor = Color.Transparent,
-                                    unfocusedIndicatorColor = Color.Transparent,
-                                    focusedContainerColor = Color.Transparent,
-                                    focusedIndicatorColor = Color.Transparent
-                                ),
-                                modifier = Modifier.padding(0.dp),
-                                placeholder = {
-                                    Text(
-                                        text = "To-do",
-                                        color = Color(0xFF8C8E8F)
-                                    )
-                                })
+                            )
+                            Text(text = "Add Todo", style = MaterialTheme.typography.bodySmall)
+
                         }
-                        if (listItem.images.isEmpty()) {
-                            Button(onClick = uploadImage) {
-                                Text(text = stringResource(R.string.add_image))
-                            }
-                        }
+
 
                         if (listItem.audio.isEmpty()) {
                             var audioFile: File? by remember {
@@ -441,24 +374,24 @@ fun SuccessScreen(
                         .fillMaxWidth()
 
                 ) {
-                    items(items = labels) {
+                    items(items = labels) {label->
                         Button(
                             onClick = {
                                 onUpdateTodoList(
                                     listItem.todoList.copy(
-                                        label = it
+                                        label = label
                                     )
                                 )
                             },
                             shape = RoundedCornerShape(10.dp),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = if (listItem.todoList.label == it) Color.Black else Color(
+                                containerColor = if (listItem.todoList.label == label) Color.Black else Color(
                                     0xFF898989
                                 ),
                                 contentColor = Color.White
                             )
                         ) {
-                            Text(text = it)
+                            Text(text = label)
                         }
                     }
 
@@ -490,7 +423,7 @@ fun RecordButton(
             onStartRecord()
             recording = true
         }
-    }) {
+    }, modifier = modifier) {
         Text(text = if (recording) "Stop Recording" else "Add audio")
     }
 }
@@ -508,8 +441,8 @@ fun ErrorScreen(modifier: Modifier = Modifier, onRetry: () -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NewListTopBar(modifier: Modifier = Modifier, navigateToHome: () -> Unit) {
-    CenterAlignedTopAppBar(title = { /*TODO*/ }, modifier = modifier, navigationIcon = {
+fun NewListTopBar(modifier: Modifier = Modifier, navigateToHome: () -> Unit, uploadImage: () -> Unit={}, recordAudio: () -> Unit={}) {
+    CenterAlignedTopAppBar(title = {}, modifier = modifier, navigationIcon = {
         IconButton(onClick = navigateToHome) {
             Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Arrow Back")
         }
@@ -533,25 +466,40 @@ fun NewListTopBar(modifier: Modifier = Modifier, navigateToHome: () -> Unit) {
                 Text(text = "Pin")
             }
             Column {
-                val showDropDown by remember {
+                var showDropDown by remember {
                     mutableStateOf(false)
                 }
-                IconButton(onClick = { /*TODO*/ }) {
+                IconButton(onClick = {
+                    showDropDown= !showDropDown
+                }) {
                     Icon(imageVector = Icons.Filled.MoreVert, contentDescription = "Menu")
                 }
-                DropdownMenu(expanded = showDropDown, onDismissRequest = { /*TODO*/ }) {
-                    Button(onClick = { /*TODO*/ }) {
+                DropdownMenu(expanded = showDropDown, onDismissRequest = {
+                    showDropDown= false
+                }, modifier = Modifier
+                    .padding(20.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .shadow(10.dp)) {
+                    Button(onClick = {
+                        uploadImage()
+                        showDropDown = false
+                    }, colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent)) {
                         Icon(
                             painter = painterResource(id = R.drawable.image_icon),
                             contentDescription = "Add Image"
                         )
+                        Spacer(modifier = Modifier.width(10.dp))
                         Text(text = "Add Image")
                     }
-                    Button(onClick = { /*TODO*/ }) {
+                    Button(onClick = {
+                        recordAudio()
+                        showDropDown = false
+                    }) {
                         Icon(
                             painter = painterResource(id = R.drawable.mic_icon),
                             contentDescription = "Add Image"
                         )
+                        Spacer(modifier = Modifier.width(10.dp))
                         Text(text = "Add Image")
                     }
                 }
@@ -559,6 +507,43 @@ fun NewListTopBar(modifier: Modifier = Modifier, navigateToHome: () -> Unit) {
         })
 }
 
+@Composable
+fun TodoItem(modifier: Modifier = Modifier, todoItem: TodoItemEntity, onChangeTodo: (TodoItemEntity) -> Unit) {
+    Row(verticalAlignment = Alignment.CenterVertically, modifier=modifier) {
+        Checkbox(
+            checked = todoItem.isDone,
+            onCheckedChange = {
+                onChangeTodo(
+                    todoItem.copy(
+                        isDone = it
+                    )
+                )
+            },
+            modifier = Modifier.clip(shape = RoundedCornerShape(100.dp))
+        )
+        TextField(
+            value = todoItem.task,
+            onValueChange = {
+                onChangeTodo(
+                    todoItem.copy(
+                        task = it
+                    )
+                )
+            },
+            colors = TextFieldDefaults.colors(
+                unfocusedContainerColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent
+            ),
+            modifier = Modifier.padding(0.dp),
+            placeholder = {
+                Text(
+                    text = "To-do",
+                    color = Color(0xFF8C8E8F)
+                )
+            })
+    }
+
+}
 @Preview
 @Composable
 fun NewListScreenPreview() {
